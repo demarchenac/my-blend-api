@@ -1,10 +1,10 @@
 version: "3.8"
+
 services:
-  puppeteer-app:
+  app:
     build: .
-    container_name: hono-puppeteer-ts
     ports:
       - "3000:3000"
     environment:
-      - PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
-    restart: unless-stopped
+      - PORT=3000
+    restart: always

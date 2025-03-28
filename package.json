@@ -14,8 +14,8 @@
   "description": "",
   "dependencies": {
     "@hono/node-server": "^1.14.0",
-    "hono": "^4.7.5",
-    "puppeteer": "^24.4.0"
+    "@playwright/test": "^1.51.1",
+    "hono": "^4.7.5"
   },
   "devDependencies": {
     "@types/node": "^22.13.14",
