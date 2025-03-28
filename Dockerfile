@@ -1,16 +1,23 @@
-# Playwright image: https://playwright.dev/docs/docker
+# Usa la imagen oficial de Playwright con Node.js 22 basada en Ubuntu Noble
 FROM mcr.microsoft.com/playwright:v1.51.1-noble
 
+# Establecer el directorio de trabajo
 WORKDIR /app
 
-COPY package.json package-lock.json tsconfig.json ./
+# Copiar package.json y package-lock.json primero para mejorar el cacheo
+COPY package.json package-lock.json ./
 
-RUN npm install
+# Instalar dependencias
+RUN npm ci
 
-COPY src ./src
+# Copiar el código fuente después de instalar dependencias
+COPY . .
 
+# Instalar los navegadores de Playwright
+RUN npx playwright install --with-deps
+
+# Compilar TypeScript
 RUN npm run build
 
-EXPOSE 3000
-
-CMD ["npm", "start"]
+# Definir el comando de inicio
+CMD ["node", "dist/server.js"]
