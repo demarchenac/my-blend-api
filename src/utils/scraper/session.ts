@@ -6,7 +6,7 @@ import { Source } from "../sources/types.js";
 
 export async function startSession(
   source: Source,
-  { headless = false }: LaunchOptions = { headless: false }
+  { headless = true }: LaunchOptions = { headless: true }
 ): Promise<Session> {
   const browser = await chromium.launch({ headless });
   const context = await browser.newContext();
@@ -50,16 +50,16 @@ export async function closeSession(session: NonNullable<Session>) {
   await session.browser.close();
 }
 
-export function withSession<T>(
+export function withSession<ReturnType, Options extends object>(
   source: Source,
-  scrape: (session: Session) => Promise<T>,
-  options?: LaunchOptions
-): () => Promise<T | null> {
-  return async (): Promise<T | null> => {
-    const session = await startSession(source, options);
+  scrape: (session: Session, options?: Options) => Promise<ReturnType>,
+  launchOptions?: LaunchOptions
+): (options?: Options) => Promise<ReturnType | null> {
+  return async (options?: Options): Promise<ReturnType | null> => {
+    const session = await startSession(source, launchOptions);
     if (!session) return null;
 
-    const result = await scrape(session);
+    const result = await scrape(session, options);
 
     await closeSession(session);
 

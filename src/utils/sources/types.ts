@@ -9,16 +9,21 @@ export type Source = {
 };
 
 export type Comic = {
-  source: SourceName;
   rating: number;
   name: string;
   url: string;
-  sourceUrl: string;
   status: string;
   type: string;
   image: string;
+  source: Source;
+};
+
+export type MatchingSource = {
+  source: SourceName;
+  name: string;
 };
 
 export type SourceScraper = {
   getComics(): Promise<Comic[] | null>;
+  getMatchingComics(options: { query: string }): Promise<Comic[] | null>;
 };
