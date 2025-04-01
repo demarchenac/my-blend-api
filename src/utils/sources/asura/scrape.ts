@@ -1,35 +1,14 @@
 import type { Locator, Page } from "@playwright/test";
-import { withSession } from "../scraper/session.js";
-import type { Session } from "../scraper/types.js";
-import { asuraSource as source } from "./constants.js";
-import type { Comic, SourceScraper } from "./types.js";
+import type { Comic } from "../types.js";
+import { asuraSource as source } from "../constants.js";
+import { Session } from "../../scraper/types.js";
 
-const stringCompare = (a: string, b: string) => a.toLowerCase().localeCompare(b.toLowerCase());
-
-const dynamicSort = <T>(property: keyof T, order: "asc" | "desc" = "asc") => {
-  return (a: T, b: T) => {
-    let precedence = 0;
-    if (typeof a[property] === "string" && typeof b[property] === "string") {
-      const comparison = a[property].localeCompare(b[property]);
-      precedence = order === "desc" ? -comparison : comparison;
-    }
-
-    return precedence;
-  };
-};
-
-function array2chunks<T>(array: Array<T>, chunkSize: number) {
-  return Array.from({ length: Math.ceil(array.length / chunkSize) }, (_, i) =>
-    array.slice(i * chunkSize, i * chunkSize + chunkSize)
-  );
-}
-
-const scrapeUrlFromPaginationHandle = async (handle: Locator) => {
+export async function scrapeUrlFromPaginationHandle(handle: Locator) {
   const url = await handle.getAttribute("href");
   return source.url.concat(url as string);
-};
+}
 
-const scrapeComicFromPaginationHandle = async (handle: Locator): Promise<Comic> => {
+export async function scrapeComicFromPaginationHandle(handle: Locator): Promise<Comic> {
   const url = (await handle.getAttribute("href")) ?? "";
   const image = (await handle.locator("img").getAttribute("src")) ?? "";
   const spans = await handle.locator("span").all();
@@ -38,12 +17,9 @@ const scrapeComicFromPaginationHandle = async (handle: Locator): Promise<Comic> 
   const rating = Number(ratingText);
 
   return { name, status, type, rating, url, image, source };
-};
+}
 
-const scrapeComicPage = async (
-  session: NonNullable<Session>,
-  url: string
-): Promise<Comic | null> => {
+export async function scrapeComicPage(session: NonNullable<Session>, url: string): Promise<Comic | null> {
   let page: Page;
 
   try {
@@ -74,12 +50,9 @@ const scrapeComicPage = async (
   await page.close();
 
   return comic;
-};
+}
 
-const scrapeFromPagination = async <T>(
-  session: NonNullable<Session>,
-  parser: (locator: Locator) => Promise<T>
-) => {
+export async function scrapeFromPagination<T>(session: NonNullable<Session>, parser: (locator: Locator) => Promise<T>) {
   let canGoNext: boolean;
   let results: T[] = [];
 
@@ -116,43 +89,4 @@ const scrapeFromPagination = async <T>(
   } while (canGoNext);
 
   return results;
-};
-
-export async function getComics(session: Session): Promise<Comic[] | null> {
-  if (!session) return null;
-
-  await session.page.getByRole("link", { name: "Comics" }).click();
-  const urls = await scrapeFromPagination(session, scrapeUrlFromPaginationHandle);
-
-  urls.sort(stringCompare);
-
-  let comics: Comic[] = [];
-  const chunks = array2chunks(urls, 3);
-
-  for (const chunk of chunks) {
-    const chunkComics = await Promise.all(chunk.map((url) => scrapeComicPage(session, url)));
-    comics = comics.concat(chunkComics.filter(Boolean) as Comic[]);
-  }
-
-  return comics;
 }
-
-export async function getMatchingComics(
-  session: Session,
-  { query }: { query: string } = { query: "" }
-): Promise<Comic[] | null> {
-  if (!session) return null;
-
-  await session.page.getByRole("link", { name: "Comics" }).click();
-  await session.page.waitForSelector("div.grid > a");
-  await session.page.goto(`${session.page.url()}&name=${query}`);
-
-  const comics = await scrapeFromPagination(session, scrapeComicFromPaginationHandle);
-  comics.sort(dynamicSort("name"));
-  return comics;
-}
-
-export const asura: SourceScraper = {
-  getComics: withSession(source, getComics),
-  getMatchingComics: withSession(source, getMatchingComics),
-};
