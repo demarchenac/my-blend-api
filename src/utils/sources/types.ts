@@ -1,6 +1,3 @@
-import { LaunchOptions } from "@playwright/test";
-import { Session } from "../scraper/types.js";
-
 export type SourceName = "asura";
 
 export type Source = {
@@ -16,7 +13,10 @@ export type Comic = {
   type: string;
   image: string;
   source: Source;
+  chapters: { first: number; last: number };
 };
+
+export type PaginatedComic = Omit<Comic, "url" | "chapters"> & { slug: string };
 
 export type MatchingSource = {
   source: SourceName;
@@ -25,5 +25,7 @@ export type MatchingSource = {
 
 export type SourceScraper = {
   getComics(): Promise<Comic[] | null>;
-  getMatchingComics(options: { query: string }): Promise<Comic[] | null>;
+  getMatchingComics(options: { query: string }): Promise<PaginatedComic[] | null>;
+  getComicBySlug(options: { slug: string }): Promise<Comic | null>;
+  getComicChapterImages(options: { slug: string; chapter: number }): Promise<string[] | null>;
 };
