@@ -9,6 +9,7 @@ import { sources } from "./routes/sources.js";
 import { series } from "./routes/series.js";
 
 const app = new Hono();
+
 app.use(prettyJSON());
 app.use(logger());
 app.use(poweredBy());
@@ -21,12 +22,8 @@ app.route("/health-check", healthCheck);
 app.route("/sources", sources);
 app.route("/series", series);
 
-// Iniciar servidor con Hono.js
 const port = Number(process.env.PORT) || 3000;
-serve({
-  fetch: app.fetch,
-  port,
-});
+serve({ fetch: app.fetch, port });
 
 console.log(`🚀 Server running on port: ${port}`);
 console.log(`- Locally: http://localhost:${port}`);
