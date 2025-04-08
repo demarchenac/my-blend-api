@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { sources } from "../utils/sources/constants.js";
 import { scraper } from "../utils/sources/scraper.js";
 import type { Comic, PaginatedComic } from "../utils/sources/types.js";
+import { imageToRaw } from "../utils/image/index.js";
 
 const series = new Hono();
 
@@ -27,7 +28,9 @@ series.get("/:slug", async (c) => {
   for (const source of sources) {
     const comic = await scraper[source.name].getComicBySlug({ slug });
     if (!comic) continue;
-    matches[source.name] = comic;
+
+    const image = await imageToRaw(comic.image);
+    matches[source.name] = { ...comic, image };
   }
 
   return c.json({ matches });

@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { sources as sourceList } from "../utils/sources/constants.js";
 import { scraper } from "../utils/sources/scraper.js";
+import { imageToRaw } from "../utils/image/index.js";
 
 const sources = new Hono();
 
@@ -25,7 +26,8 @@ sources.get("/:source/series/:slug/chapter/:chapter", async (c) => {
   const source = sourceList.find((s) => s.name === sourceName);
   if (!source) return c.json({ ok: false }, 404);
 
-  const pages = await scraper[source.name].getComicChapterImages({ slug, chapter });
+  const urls = await scraper[source.name].getComicChapterImages({ slug, chapter });
+  const pages = await Promise.all((urls ?? []).map((url) => imageToRaw(url)));
 
   return c.json(pages);
 });
